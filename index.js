@@ -181,7 +181,38 @@ async function run() {
         _id: new ObjectId(id),
       });
       res.status(204).end();
-    }
+    })
+      // Product related endpoints
+      app.get("/products", async (req, res) => {
+        const result = await productsCollection.find().toArray();
+        res.send(result);
+      });
+     
+      app.post("/products", async (req, res) => {
+        try {
+          const newMedicine = req.body;
+      
+          // Log incoming data for debugging
+          console.log("New Medicine Data:", newMedicine);
+      
+          // Validate incoming data (optional but recommended)
+          if (!newMedicine.name || !newMedicine.price || !newMedicine.image) {
+            return res.status(400).json({ message: "Invalid data" });
+          }
+      
+          // Insert new medicine into the database
+          const result = await productsCollection.insertOne(newMedicine);
+      
+          if (result.insertedId) {
+            res.status(201).json({ message: "Medicine added successfully", id: result.insertedId });
+          } else {
+            res.status(500).json({ message: "Failed to add medicine" });
+          }
+        } catch (error) {
+          console.error("Server Error:", error);
+          res.status(500).json({ message: "Server Error", error: error.message });
+        }
+      });
 
 
   
