@@ -45,6 +45,15 @@ async function run() {
     const paymentsCollection = db.collection("payments");
     const advertisementsCollection = db.collection("advertisements");
 
+     // JWT related API
+     app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
+
   
   } catch (err) {
     console.error("Error connecting to MongoDB:", err);
