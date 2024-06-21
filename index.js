@@ -213,6 +213,54 @@ async function run() {
           res.status(500).json({ message: "Server Error", error: error.message });
         }
       });
+      
+    //categories related
+    // GET all cart items
+    app.get("/cart", async (req, res) => {
+      try {
+        const cartItems = await db.collection("cart").find().toArray();
+        res.json(cartItems);
+      } catch (error) {
+        console.error("Error fetching cart items:", error.message);
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
+    // Route to handle adding medicine to cart
+    app.post("/cart", async (req, res) => {
+      const { medicine } = req.body;
+
+      try {
+        // Insert the medicine into the cart collection
+        const result = await cartCollection.insertOne(medicine);
+
+        console.log("Medicine added to cart:", result.insertedId);
+
+        res
+          .status(200)
+          .json({ message: "Medicine added to cart successfully" });
+      } catch (error) {
+        console.error("Error adding medicine to cart:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+    // DELETE remove an item from cart
+    app.delete("/cart/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const result = await db
+          .collection("cart")
+          .deleteOne({ _id: ObjectId(id) });
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ error: "Item not found" });
+        }
+        res.status(204).json({ message: "Item deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting item from cart:", error.message);
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
 
 
   
