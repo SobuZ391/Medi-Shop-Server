@@ -344,6 +344,158 @@ async function run() {
       res.status(500).json({ error: error.message });
     }
   });
+  app.get("/sales-report", (req, res) => {
+    const { startDate, endDate } = req.query;
+    let filteredSales = salesData;
+    if (startDate && endDate) {
+      filteredSales = salesData.filter((sale) => {
+        const saleDate = new Date(sale.date);
+        return (
+          saleDate >= new Date(startDate) && saleDate <= new Date(endDate)
+        );
+      });
+    }
+    res.json(filteredSales);
+  });
+
+  
+// Dummy function to generate report (Replace this with actual report generation logic)
+const generateReport = (format, startDate, endDate) => {
+const reportData = `Report from ${startDate} to ${endDate}`;
+const filePath = path.join(__dirname, `sales_report.${format}`);
+fs.writeFileSync(filePath, reportData);
+return filePath;
+};
+
+// Endpoint to generate and download PDF report
+app.get('/reports/pdf', async (req, res) => {
+const { startDate, endDate } = req.query;
+
+try {
+  // Fetch sales data from the `/payments` endpoint
+  const response = await axios.get(`http://localhost:${port}/payments`, {
+    params: { startDate, endDate }
+  });
+  const salesData = response.data;
+
+  // Generate PDF report
+  const pdfFileName = `sales_report_${startDate}_${endDate}.pdf`;
+
+  // Placeholder for actual PDF generation logic (using libraries like `pdfkit`, `jspdf`, or `react-pdf`)
+  // Example: Using `file-saver` to create a downloadable file
+  const canvas = createCanvas(200, 200);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'red';
+  ctx.fillRect(10, 10, 100, 100);
+
+  const stream = canvas.createPDFStream();
+  stream.pipe(createWriteStream(pdfFileName));
+
+  stream.on('finish', function () {
+    saveAs(pdfFileName, pdfFileName);
+  });
+
+  res.end();
+} catch (error) {
+  console.error('Error generating PDF report:', error);
+  res.status(500).json({ error: 'Internal server error' });
+}
+});
+// Admin routes
+app.get('/admin/advertisements', async (req, res) => {
+try {
+  const advertisements = await advertisementsCollection.find().toArray();
+  res.json(advertisements);
+} catch (err) {
+  console.error('Error fetching advertisements:', err);
+  res.status(500).send('Error fetching advertisements');
+}
+});
+
+app.patch('/admin/advertisements/:id', async (req, res) => {
+try {
+  const id = req.params.id;
+  const inSlide = req.body.in_slide;
+
+  // Validate the ID
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send('Invalid advertisement ID');
+  }
+
+  const result = await advertisementsCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { in_slide: inSlide } }
+  );
+
+  if (result.modifiedCount === 1) {
+    res.send('Advertisement updated successfully');
+  } else {
+    res.status(404).send('Advertisement not found');
+  }
+} catch (err) {
+  console.error('Error updating advertisement:', err);
+  res.status(500).send('Error updating advertisement');
+}
+});
+
+// Seller routes
+app.get('/seller/referred-medicines', async (req, res) => {
+try {
+  const sellerEmail = req.query.sellerEmail; // Fetch the sellerEmail from the query parameter
+  const medicines = await advertisementsCollection.find({ sellerEmail }).toArray();
+  res.json(medicines);
+} catch (err) {
+  console.error('Error fetching referred medicines:', err);
+  res.status(500).send('Error fetching referred medicines');
+}
+});
+
+
+// Route to add advertisement
+app.post('/seller/advertisements', async (req, res) => {
+try {
+  const newAd = {
+    sellerEmail: req.body.sellerEmail,
+    image: req.body.image,
+    description: req.body.description,
+    mediName: req.body.name,
+    in_slide: false,
+  };
+
+  const result = await advertisementsCollection.insertOne(newAd);
+
+  if (result.acknowledged) {
+    res.status(201).send('Advertisement added successfully');
+  } else {
+    res.status(500).send('Error adding advertisement');
+  }
+} catch (err) {
+  console.error('Error adding advertisement:', err);
+  res.status(500).send('Error adding advertisement');
+}
+});
+// Backend route to update the status of an advertisement
+app.put('/seller/advertisements/:id', async (req, res) => {
+try {
+  const { id } = req.params;
+  const { in_slider } = req.body;
+
+  const updateResult = await advertisementsCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { in_slider: in_slider } }
+  );
+
+  if (updateResult.modifiedCount === 1) {
+    res.json({ message: 'Advertisement status updated successfully' });
+  } else {
+    res.status(404).json({ message: 'Advertisement not found' });
+  }
+} catch (err) {
+  console.error('Error updating advertisement status:', err);
+  res.status(500).send('Error updating advertisement status');
+}
+});
+
 
 
 
