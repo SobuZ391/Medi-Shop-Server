@@ -78,6 +78,11 @@ async function run() {
         }
         next();
       };
+       // User related endpoints
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
 
 
   
