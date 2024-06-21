@@ -83,6 +83,24 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
+    app.get("/users/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const user = await userCollection.findOne({ email });
+      const isAdmin = user?.role === "admin";
+      res.send({ admin: isAdmin });
+    });
+    app.get("/users/seller/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const user = await userCollection.findOne({ email });
+      const isSeller = user?.role === "seller";
+      res.send({ seller: isSeller });
+    });
 
 
   
