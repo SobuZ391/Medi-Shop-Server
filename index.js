@@ -171,6 +171,17 @@ async function run() {
     );
     res.json(result);
   });
+  app.delete(
+    "/categories/:id",
+    verifyToken,
+    verifyAdmin,
+    async (req, res) => {
+      const { id } = req.params;
+      const result = await categoriesCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.status(204).end();
+    }
 
 
   
