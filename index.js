@@ -150,7 +150,27 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
+   // Category related endpoints
+   app.get("/categories", async (req, res) => {
+    const result = await categoriesCollection.find().toArray();
+    res.send(result);
+  });
 
+  app.post("/categories", verifyToken, verifyAdmin, async (req, res) => {
+    const newCategory = req.body;
+    const result = await categoriesCollection.insertOne(newCategory);
+    res.status(201).json(result);
+  });
+
+  app.put("/categories/:id", verifyToken, verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    const updatedCategory = req.body;
+    const result = await categoriesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedCategory }
+    );
+    res.json(result);
+  });
 
 
   
