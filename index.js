@@ -33,7 +33,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server (optional starting in v4.7)
-    await client.connect();
+    
     console.log("Connected to MongoDB");
 
     const db = client.db("mediDb");
@@ -278,35 +278,30 @@ async function run() {
         res.status(500).json({ error: "Failed to create payment intent" });
       }
     });
-    // Route to handle payment confirmation and saving data to the database
-    app.post("/confirm-payment", async (req, res) => {
-      const { paymentIntentId, amount, status, email, mediName } = req.body;
-      try {
-        const paymentData = {
-          paymentIntentId,
-          amount,
-          status,
-          email,
-          mediName,
-          date: new Date(),
-        };
-    
+ 
+  // Route to handle payment confirmation and saving data to the database
+  app.post("/confirm-payment", async (req, res) => {
+    const { paymentIntentId, amount, status, email, mediName } = req.body;
+    try {
+      const paymentData = {
+        paymentIntentId,
+        amount,
+        status,
+        email,
+        mediName,
+        date: new Date(),
+      };
 
-        const result = await paymentsCollection.insertOne(paymentData);
+      const result = await paymentsCollection.insertOne(paymentData);
 
-        console.log(
-          "Payment confirmation added to database:",
-          result.insertedId
-        );
+      console.log("Payment confirmation added to database:", result.insertedId);
 
-        res
-          .status(200)
-          .json({ message: "Payment confirmation saved successfully" });
-      } catch (error) {
-        console.error("Error saving payment confirmation:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-      }
-    });
+      res.status(200).json({ message: "Payment confirmation saved successfully" });
+    } catch (error) {
+      console.error("Error saving payment confirmation:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
     app.get("/payments/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
