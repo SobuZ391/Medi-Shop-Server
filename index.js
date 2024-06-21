@@ -260,6 +260,91 @@ async function run() {
         res.status(500).json({ error: "Server error" });
       }
     });
+    // Route to create a payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const { amount } = req.body;
+
+      try {
+        // Create a PaymentIntent with the specified amount
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount,
+          currency: "usd", // adjust currency as needed
+        });
+
+        // Send client secret to frontend
+        res.json({ clientSecret: paymentIntent.client_secret });
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        res.status(500).json({ error: "Failed to create payment intent" });
+      }
+    });
+    // Route to handle payment confirmation and saving data to the database
+    app.post("/confirm-payment", async (req, res) => {
+      const { paymentIntentId, amount, status, email, mediName } = req.body;
+      try {
+        const paymentData = {
+          paymentIntentId,
+          amount,
+          status,
+          email,
+          mediName,
+          date: new Date(),
+        };
+    
+
+        const result = await paymentsCollection.insertOne(paymentData);
+
+        console.log(
+          "Payment confirmation added to database:",
+          result.insertedId
+        );
+
+        res
+          .status(200)
+          .json({ message: "Payment confirmation saved successfully" });
+      } catch (error) {
+        console.error("Error saving payment confirmation:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+
+    app.get("/payments/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const query = { email };
+      const result = await paymentsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get('/payments', async (req, res) => {
+      try {
+        const payments = await paymentsCollection.find({}).toArray();
+        console.log('Payments:', payments); // Log the query result
+        res.json(payments);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+  // Endpoint to update payment status
+  app.patch('/payments/:id', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+      const payment = await paymentsCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: { status } },
+        { returnOriginal: false }
+      );
+      res.json(payment.value);
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
 
 
 
