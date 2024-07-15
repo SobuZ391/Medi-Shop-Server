@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const { MongoClient, ObjectId } = require("mongodb");
 const stripe = require("stripe")(
-  "sk_test_51PNgLNRtOcwhWUJ1t6qbvvOvlHBWyuL2poBX64qLMpLyuwFvTB8tU41Rc0r7K3vcQrXdNypp8f8TynOtGfa6TsDn00MQhAf1Kl"
+  `${process.env.STRIPE}`
 );
 const cors = require("cors");
 require("dotenv").config();
